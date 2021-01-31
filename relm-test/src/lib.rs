@@ -28,7 +28,7 @@ use gdk::keys::Key;
 use gdk::keys::constants as key;
 use glib::{IsA, Object, object::Cast};
 use gtk::{Inhibit, ToolButton, ToolButtonExt, Widget, WidgetExt};
-use gtk_test::{focus, mouse_move, run_loop, wait_for_draw};
+use gtk_test::{self, focus, mouse_move, run_loop, wait_for_draw};
 use relm::StreamHandle;
 
 // TODO: should remove the signal after wait()?
@@ -151,8 +151,22 @@ pub fn click<W: Clone + IsA<Object> + IsA<Widget> + WidgetExt + IsA<W>>(widget: 
         let allocation = widget.get_allocation();
         mouse_move(widget, allocation.width / 2, allocation.height / 2);
         let mut enigo = Enigo::new();
+        println!("Click");
         enigo.mouse_click(MouseButton::Left);
         observer.wait();
+        // FIXME: even if the click was registered, that does not mean the relm events were
+        // processed.
+        // The following could happen:
+        // The above observer got the GTK event.
+        // The observer wait returns.
+        // Relm gets a GTK event.
+        // Relm emits a message.
+        //
+        // Since we don't try to process messages after the wait for as long as is required, we
+        // might never see the message being processed.
+
+        gtk_test::wait(0);
+        run_loop();
     });
 }
 
@@ -171,10 +185,16 @@ pub fn double_click<W: Clone + IsA<Object> + IsA<Widget> + WidgetExt>(widget: &W
         let allocation = widget.get_allocation();
         mouse_move(widget, allocation.width / 2, allocation.height / 2);
         let mut enigo = Enigo::new();
+        // FIXME: seems like it's triggered as two single clicks.
+        println!("Click 1");
         enigo.mouse_click(MouseButton::Left);
         run_loop();
+        println!("Click 2");
         enigo.mouse_click(MouseButton::Left);
         observer.wait();
+
+        gtk_test::wait(0);
+        run_loop();
     });
 }
 

@@ -131,7 +131,10 @@ impl Widget for Win {
     fn update(&mut self, event: Msg) {
         match event {
             Decrement => self.model.counter -= 1,
-            DoubleClick => self.model.inc_text = "Double click".to_string(),
+            DoubleClick => {
+                println!("Double click");
+                self.model.inc_text = "Double click".to_string()
+            },
             // To be listened to by the user.
             FiveInc => (),
             GetModel => self.model.relm.stream().emit(RecvModel(self.model.clone())),
