@@ -118,6 +118,8 @@ pub use glib::translate::{FromGlibPtrNone, ToGlib, ToGlibPtr};
 pub use gobject_sys::{GParameter, g_object_newv};
 use glib::Continue;
 
+use std::time::Duration;
+
 pub use crate::core::{Channel, EventStream, Sender, StreamHandle};
 pub use crate::state::{
     DisplayVariant,
@@ -343,7 +345,8 @@ pub fn run<WIDGET>(model_param: WIDGET::ModelParam) -> Result<(), ()>
 /// Emit the `msg` every `duration` ms.
 pub fn interval<F: Fn() -> MSG + 'static, MSG: 'static>(stream: &StreamHandle<MSG>, duration: u32, constructor: F) {
     let stream = stream.clone();
-    glib::timeout_add_local(duration, move || {
+
+    glib::timeout_add_local(Duration::new((duration / 1000).into(), 0), move || {
         let msg = constructor();
         stream.emit(msg);
         Continue(true)
@@ -353,7 +356,7 @@ pub fn interval<F: Fn() -> MSG + 'static, MSG: 'static>(stream: &StreamHandle<MS
 /// After `duration` ms, emit `msg`.
 pub fn timeout<F: Fn() -> MSG + 'static, MSG: 'static>(stream: &StreamHandle<MSG>, duration: u32, constructor: F) {
     let stream = stream.clone();
-    glib::timeout_add_local(duration, move || {
+    glib::timeout_add_local(Duration::new((duration / 1000).into(), 0), move || {
         let msg = constructor();
         stream.emit(msg);
         Continue(false)
